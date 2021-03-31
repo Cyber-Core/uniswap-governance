@@ -18,15 +18,18 @@ interface GovernanceFixture {
 
 export async function governanceFixture(
   [wallet]: Wallet[],
-  provider: providers.Web3Provider
+  provider: providers.JsonRpcProvider
 ): Promise<GovernanceFixture> {
   // deploy UNI, sending the total supply to the deployer
-  const { timestamp: now } = await provider.getBlock('latest')
-  const timelockAddress = Contract.getContractAddress({ from: wallet.address, nonce: 1 })
+  // const { timestamp: now } = await provider.getBlock('latest')
+  let now = 1617119895682;
+  const nonce = await provider.getTransactionCount(wallet.address)
+
+  const timelockAddress = Contract.getContractAddress({ from: wallet.address, nonce: nonce+1 })
   const uni = await deployContract(wallet, Uni, [wallet.address, timelockAddress, now + 60 * 60])
 
   // deploy timelock, controlled by what will be the governor
-  const governorAlphaAddress = Contract.getContractAddress({ from: wallet.address, nonce: 2 })
+  const governorAlphaAddress = Contract.getContractAddress({ from: wallet.address, nonce: nonce+2 })
   const timelock = await deployContract(wallet, Timelock, [governorAlphaAddress, DELAY])
   expect(timelock.address).to.be.eq(timelockAddress)
 

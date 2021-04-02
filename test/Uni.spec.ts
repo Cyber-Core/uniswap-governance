@@ -1,5 +1,7 @@
 import chai, { expect } from 'chai'
 import { BigNumber, Contract, constants, utils } from 'ethers'
+import { providers, Wallet} from 'ethers'
+
 import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
 import { ecsign } from 'ethereumjs-util'
 
@@ -19,20 +21,40 @@ const PERMIT_TYPEHASH = utils.keccak256(
 )
 
 describe('Uni', () => {
-  const provider = new MockProvider({
-    ganacheOptions: {
-      hardfork: 'istanbul',
-      mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-      gasLimit: 9999999,
-    },
-  })
-  const [wallet, other0, other1] = provider.getWallets()
-  const loadFixture = createFixtureLoader([wallet], provider)
+  // const provider = new MockProvider({
+  //   ganacheOptions: {
+  //     hardfork: 'istanbul',
+  //     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
+  //     gasLimit: 9999999,
+  //   },
+  // })
+  // const [wallet, other0, other1] = provider.getWallets()
+  const provider = new providers.JsonRpcProvider("http://127.0.0.1:9090/solana", {chainId:111, name:""});
+  const wallet = new Wallet("0x769c58f303b0fe8d4513df3dc086b0f18d8076d147384337a336d18b47e21591", provider)
+  // const wallet = new Wallet("0xa45bb678781eaebed1eaca0921efb31aaf66677345d1f60bf1af63d105548ead", provider)
+  const other0 = new Wallet("0x1c00007f45bac5bf39ff1749cef735b37445ba39bc6511a5c0ef6ac15e5e1bd7", provider)
+  const other1 = new Wallet("0x7ff569f2cf9e76d03a53dc9784c212507064305494625b8f6ee7aed3562d6737", provider)
+  // const loadFixture = createFixtureLoader([wallet], provider)
 
   let uni: Contract
+  let time: Contract
+  let gov: Contract
   beforeEach(async () => {
-    const fixture = await loadFixture(governanceFixture)
+
+    const fixture = await governanceFixture([wallet], provider)
     uni = fixture.uni
+    time = fixture.timelock
+    gov = fixture.governorAlpha
+  })
+
+  it('deploy contracts', async () => {
+    console.log("deploy Uni, Timelock, GovernorAlpha complete")
+    console.log("Copy next lines to `update_contracts.sh` from uniswap-interface.git repository")
+    console.log("--------------- START OF COPIED LINES -----------------")
+    console.log("update_address UNI_ADDRESS", uni.address)
+    console.log("update_address TIMELOCK_ADDRESS", time.address)
+    console.log("update_address GOVERNANCE_ADDRESS", gov.address)
+    console.log("---------------- END OF COPIED LINES ------------------")
   })
 
   it('permit', async () => {
@@ -104,7 +126,7 @@ describe('Uni', () => {
     await expect(uni.mint(wallet.address, 1)).to.be.revertedWith('Uni::mint: minting not allowed yet')
 
     let timestamp = await uni.mintingAllowedAfter()
-    await mineBlock(provider, timestamp.toString())
+    // await mineBlock(provider, timestamp.toString())
 
     await expect(uni.connect(other1).mint(other1.address, 1)).to.be.revertedWith('Uni::mint: only the minter can mint')
     await expect(uni.mint('0x0000000000000000000000000000000000000000', 1)).to.be.revertedWith('Uni::mint: cannot transfer to the zero address')
@@ -116,7 +138,7 @@ describe('Uni', () => {
     expect(await uni.balanceOf(wallet.address)).to.be.eq(supply.add(amount))
 
     timestamp = await uni.mintingAllowedAfter()
-    await mineBlock(provider, timestamp.toString())
+    // await mineBlock(provider, timestamp.toString())
     // cannot mint 2.01%
     await expect(uni.mint(wallet.address, supply.mul(mintCap.add(1)))).to.be.revertedWith('Uni::mint: exceeded mint cap')
   })

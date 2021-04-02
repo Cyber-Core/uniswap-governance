@@ -37,21 +37,24 @@ describe('Uni', () => {
   // const loadFixture = createFixtureLoader([wallet], provider)
 
   let uni: Contract
+  let time: Contract
+  let gov: Contract
   beforeEach(async () => {
-    let time: Contract
-    let gov: Contract
 
     const fixture = await governanceFixture([wallet], provider)
     uni = fixture.uni
     time = fixture.timelock
     gov = fixture.governorAlpha
-    console.log("uni:", uni.address)
-    console.log("time:", time.address)
-    console.log("gov:", gov.address)
   })
 
   it('deploy contracts', async () => {
     console.log("deploy Uni, Timelock, GovernorAlpha complete")
+    console.log("Copy next lines to `update_contracts.sh` from uniswap-interface.git repository")
+    console.log("--------------- START OF COPIED LINES -----------------")
+    console.log("update_address UNI_ADDRESS", uni.address)
+    console.log("update_address TIMELOCK_ADDRESS", time.address)
+    console.log("update_address GOVERNANCE_ADDRESS", gov.address)
+    console.log("---------------- END OF COPIED LINES ------------------")
   })
 
   it('permit', async () => {
